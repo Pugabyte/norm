@@ -7,6 +7,7 @@ import java.sql.ResultSetMetaData;
 import java.sql.SQLException;
 import java.sql.Statement;
 import java.util.ArrayList;
+import java.util.IntSummaryStatistics;
 import java.util.List;
 import java.util.Map;
 
@@ -25,10 +26,8 @@ public class Query {
 	private Object generatedKeyReceiver;
 	private String[] generatedKeyNames;
 
-	private String sql;
-	private String table;
-	private String where;
-	private String orderBy;
+	private String sql, table, where, orderBy;
+	private Integer limit, offset;
 
 	private Object[] args;
 
@@ -83,11 +82,18 @@ public class Query {
 		return this;
 	}
 
-	/**
-	 * Add an "orderBy" clause to a query.
-	 */
 	public Query orderBy(String orderBy) {
 		this.orderBy = orderBy;
+		return this;
+	}
+
+	public Query limit(int limit) {
+		this.limit = limit;
+		return this;
+	}
+
+	public Query offset(int offset) {
+		this.offset = offset;
 		return this;
 	}
 
@@ -100,7 +106,11 @@ public class Query {
 		if (list.size() > 0) {
 			return list.get(0);
 		} else {
-			return null;
+			try {
+				return clazz.newInstance();
+			} catch (InstantiationException | IllegalAccessException e) {
+				return null;
+			}
 		}
 	}
 
@@ -194,6 +204,9 @@ public class Query {
 				// if the receiver class is a primitive just grab the first column and assign it
 				while (rs.next()) {
 					Object colValue = rs.getObject(1);
+					if (colValue != null)
+						colValue = sqlMaker.convertValue(rs.getObject(1), meta.getColumnTypeName(1));
+
 					out.add((T) colValue);
 				}
 
@@ -204,7 +217,9 @@ public class Query {
 
 					for (int i = 1; i <= colCount; i++) {
 						String colName = meta.getColumnLabel(i);
-						Object colValue = sqlMaker.convertValue(rs.getObject(i), meta.getColumnTypeName(i));
+						Object colValue = rs.getObject(i);
+						if (colValue != null)
+							colValue = sqlMaker.convertValue(rs.getObject(i), meta.getColumnTypeName(i));
 
 						pojoInfo.putValue(row, colName, colValue);
 					}
@@ -539,6 +554,14 @@ public class Query {
 
 	public String getOrderBy() {
 		return orderBy;
+	}
+
+	public Integer getLimit() {
+		return limit;
+	}
+
+	public Integer getOffset() {
+		return offset;
 	}
 
 	public String getWhere() {

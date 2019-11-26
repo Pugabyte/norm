@@ -14,6 +14,7 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
+import javax.management.StandardMBean;
 import javax.persistence.Column;
 import javax.persistence.EnumType;
 import javax.persistence.Enumerated;
@@ -99,65 +100,39 @@ public class StandardPojoInfo implements PojoInfo {
 				table = clazz.getSimpleName();
 			}
 
+			table = table.toLowerCase();
+
 		} catch (Throwable t) {
 			throw new DbException(t);
 		}
 	}
-	
-	
-	
+
 	private List<Property> populateProperties(Class<?> clazz) throws IntrospectionException, InstantiationException, IllegalAccessException {
-		
+
 		List<Property> props = new ArrayList<>();
-		
-		for (Field field : clazz.getFields()) {
+
+		for (Field field : clazz.getDeclaredFields()) {
 			int modifiers = field.getModifiers();
 
-			if (Modifier.isPublic(modifiers)) {
-
-				if (Modifier.isStatic(modifiers)
-						|| Modifier.isFinal(modifiers)) {
-					continue;
-				}
-
-				if (field.getAnnotation(Transient.class) != null) {
-					continue;
-				}
-
-				Property prop = new Property();
-				prop.name = field.getName();
-				prop.field = field;
-				prop.dataType = field.getType();
-
-				applyAnnotations(prop, field);
-
-				props.add(prop);
-			}
-		}
-
-		BeanInfo beanInfo = Introspector.getBeanInfo(clazz, Object.class);
-		PropertyDescriptor[] descriptors = beanInfo.getPropertyDescriptors();
-		for (PropertyDescriptor descriptor : descriptors) {
-
-			Method readMethod = descriptor.getReadMethod();
-			if (readMethod == null) {
+			if (Modifier.isStatic(modifiers) || Modifier.isFinal(modifiers)) {
 				continue;
 			}
-			if (readMethod.getAnnotation(Transient.class) != null) {
+
+			if (field.getAnnotation(Transient.class) != null) {
 				continue;
 			}
-			
+
 			Property prop = new Property();
-			prop.name = descriptor.getName();
-			prop.readMethod = readMethod;
-			prop.writeMethod = descriptor.getWriteMethod();
-			prop.dataType = descriptor.getPropertyType();
+			prop.name = field.getName();
+			prop.field = field;
+			prop.field.setAccessible(true);
+			prop.dataType = field.getType();
 
-			applyAnnotations(prop, prop.readMethod);
+			applyAnnotations(prop, field);
 
 			props.add(prop);
 		}
-		
+
 		return props;
 	}
 
@@ -168,7 +143,7 @@ public class StandardPojoInfo implements PojoInfo {
 	 * @throws InstantiationException 
 	 */
 	private void applyAnnotations(Property prop, AnnotatedElement ae) throws InstantiationException, IllegalAccessException {
-		
+
 		Column col = ae.getAnnotation(Column.class);
 		if (col != null) {
 			String name = col.name().trim();
@@ -217,10 +192,7 @@ public class StandardPojoInfo implements PojoInfo {
 			
 			Object value = null;
 			
-			if (prop.readMethod != null) {
-				value = prop.readMethod.invoke(pojo);
-				
-			} else if (prop.field != null) {
+			if (prop.field != null) {
 				value = prop.field.get(pojo);
 			}
 			
@@ -254,23 +226,13 @@ public class StandardPojoInfo implements PojoInfo {
 			throw new DbException("No such field: " + name);
 		}
 
-		if (value != null) {
-			if (prop.serializer != null) {
-				value = prop.serializer.deserialize((String) value, prop.dataType);
+		if (value == null) return;
 
-			} else if (prop.isEnumField) {
-				value = getEnumConst(prop.enumClass, prop.enumType, value);
-			}
-		}
+		if (prop.serializer != null) {
+			value = prop.serializer.deserialize((String) value);
 
-		if (prop.writeMethod != null) {
-			try {
-				prop.writeMethod.invoke(pojo, value);
-			} catch (IllegalAccessException | IllegalArgumentException | InvocationTargetException e) {
-				throw new DbException("Could not write value into pojo. Property: " + prop.name + " method: "
-						+ prop.writeMethod.toString() + " value: " + value + " value class: " + value.getClass().toString(), e);
-			}
-			return;
+		} else if (prop.isEnumField) {
+			value = getEnumConst(prop.enumClass, prop.enumType, value);
 		}
 
 		if (prop.field != null) {
@@ -279,7 +241,6 @@ public class StandardPojoInfo implements PojoInfo {
 			} catch (IllegalArgumentException | IllegalAccessException e) {
 				throw new DbException("Could not set value into pojo. Field: " + prop.field.toString() + " value: " + value, e);
 			}
-			return;
 		}
 
 	}

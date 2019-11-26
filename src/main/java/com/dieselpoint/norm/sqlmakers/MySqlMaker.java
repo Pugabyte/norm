@@ -2,6 +2,9 @@ package com.dieselpoint.norm.sqlmakers;
 
 import com.dieselpoint.norm.Query;
 
+import java.math.BigDecimal;
+import java.sql.Date;
+import java.sql.Timestamp;
 
 public class MySqlMaker extends StandardSqlMaker {
 
@@ -69,6 +72,18 @@ public class MySqlMaker extends StandardSqlMaker {
 	public Object convertValue(Object value, String columnTypeName) {
 		if ("TINYINT".equalsIgnoreCase(columnTypeName)) {
 			value = (int) value == 1;
+		}
+
+		if ("DATE".equalsIgnoreCase(columnTypeName)) {
+			value = ((Date) value).toLocalDate();
+		}
+
+		if ("DATETIME".equalsIgnoreCase(columnTypeName)) {
+			value = ((Timestamp) value).toLocalDateTime();
+		}
+
+		if ("DECIMAL".equalsIgnoreCase(columnTypeName)) {
+			value = ((BigDecimal) value).doubleValue();
 		}
 
 		return value;

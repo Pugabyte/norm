@@ -92,12 +92,16 @@ public class Database {
 		return new Query(this).where(where, args);
 	}
 
-	
-	/**
-	 * Create a query with the given "order by" clause.
-	 */
 	public Query orderBy(String orderBy) {
 		return new Query(this).orderBy(orderBy);
+	}
+
+	public Query limit(int limit) {
+		return new Query(this).limit(limit);
+	}
+
+	public Query offset(int offset) {
+		return new Query(this).offset(offset);
 	}
 
 	/**
@@ -137,7 +141,7 @@ public class Database {
 	}
 	
 	/**
-	 * @see Query.generateKeyReceiver
+	 * @see Query#generatedKeyReceiver(Object generatedKeyReceiver, String... generatedKeyNames)
 	 */
 	public Query generatedKeyReceiver(Object generatedKeyReceiver, String... generatedKeyNames) {
 		return new Query(this).generatedKeyReceiver(generatedKeyReceiver, generatedKeyNames);

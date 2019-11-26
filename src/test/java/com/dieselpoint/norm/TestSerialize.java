@@ -27,7 +27,7 @@ public class TestSerialize {
 		}
 
 		@Override
-		public Object deserialize(String in, Class<?> targetClass) {
+		public Object deserialize(String in) {
 			Object out = null; // convert the string back to a list here
 			return out;
 		}
