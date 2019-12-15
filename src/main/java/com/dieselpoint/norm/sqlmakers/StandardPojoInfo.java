@@ -1,20 +1,9 @@
 package com.dieselpoint.norm.sqlmakers;
 
-import java.beans.BeanInfo;
-import java.beans.IntrospectionException;
-import java.beans.Introspector;
-import java.beans.PropertyDescriptor;
-import java.lang.reflect.AnnotatedElement;
-import java.lang.reflect.Field;
-import java.lang.reflect.InvocationTargetException;
-import java.lang.reflect.Method;
-import java.lang.reflect.Modifier;
-import java.util.ArrayList;
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.Map;
+import com.dieselpoint.norm.ColumnOrder;
+import com.dieselpoint.norm.DbException;
+import com.dieselpoint.norm.serialize.DbSerializer;
 
-import javax.management.StandardMBean;
 import javax.persistence.Column;
 import javax.persistence.EnumType;
 import javax.persistence.Enumerated;
@@ -22,10 +11,14 @@ import javax.persistence.GeneratedValue;
 import javax.persistence.Id;
 import javax.persistence.Table;
 import javax.persistence.Transient;
-
-import com.dieselpoint.norm.ColumnOrder;
-import com.dieselpoint.norm.DbException;
-import com.dieselpoint.norm.serialize.DbSerializer;
+import java.beans.IntrospectionException;
+import java.lang.reflect.AnnotatedElement;
+import java.lang.reflect.Field;
+import java.lang.reflect.Modifier;
+import java.util.ArrayList;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
 
 /**
  * Provides means of reading and writing properties in a pojo.
@@ -267,8 +260,6 @@ public class StandardPojoInfo implements PojoInfo {
 		}
 	}
 
-
-
 	@Override
 	public Property getGeneratedColumnProperty() {
 		return propertyMap.get(generatedColumnName);
@@ -280,11 +271,5 @@ public class StandardPojoInfo implements PojoInfo {
 	public Property getProperty(String name) {
 		return propertyMap.get(name);
 	}
-	
-	
-	
-
-
-	
 	
 }

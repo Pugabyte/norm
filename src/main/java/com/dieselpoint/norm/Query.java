@@ -1,5 +1,9 @@
 package com.dieselpoint.norm;
 
+import com.dieselpoint.norm.sqlmakers.PojoInfo;
+import com.dieselpoint.norm.sqlmakers.Property;
+import com.dieselpoint.norm.sqlmakers.SqlMaker;
+
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
@@ -7,13 +11,9 @@ import java.sql.ResultSetMetaData;
 import java.sql.SQLException;
 import java.sql.Statement;
 import java.util.ArrayList;
-import java.util.IntSummaryStatistics;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-
-import com.dieselpoint.norm.sqlmakers.PojoInfo;
-import com.dieselpoint.norm.sqlmakers.Property;
-import com.dieselpoint.norm.sqlmakers.SqlMaker;
 
 /**
  * Holds all of the information in a query. Create a query using
@@ -26,8 +26,10 @@ public class Query {
 	private Object generatedKeyReceiver;
 	private String[] generatedKeyNames;
 
-	private String sql, table, where, orderBy;
+	private String sql, columns, table, joinTable, joinClause, where, orderBy;
+	private Map<String, List<String>> joinTables;
 	private Integer limit, offset;
+	private Object insertRow;
 
 	private Object[] args;
 
@@ -41,6 +43,39 @@ public class Query {
 	public Query(Database db) {
 		this.db = db;
 		this.sqlMaker = db.getSqlMaker();
+		this.joinTables = new HashMap<String, List<String>>();
+	}
+
+	/**
+	 * Add a select clause so as to specify the columns in which
+	 * the query will return.
+	 * @param columns Example: "id,username,password"
+	 */
+	public Query select(String columns) {
+		this.columns = columns;
+		return this;
+	}
+
+	/**
+	 * Add a join clause and some parameters to specify the columns in which
+	 * the join is performed. Has no effect if the .sql() method is used.
+	 * @param joinTable Name of table in which to join.
+	 */
+	public Query innerJoin(String joinTable) {
+		this.joinTable = joinTable;
+		this.joinTables.put(joinTable, new ArrayList<String>());
+		return this;
+	}
+
+	/**
+	 * Used with .innerJoin(), specifies what field to join the tables
+	 * on.
+	 * @param joinClause Example: person.address_id = address.id
+	 */
+	public Query on(String joinClause) {
+		this.joinClause = joinClause;
+		this.joinTables.get(joinTable).add(joinClause);
+		return this;
 	}
 
 	/**
@@ -230,7 +265,7 @@ public class Query {
 		} catch (InstantiationException | IllegalAccessException | SQLException e) {
 			throw new DbException(e);
 		} finally {
-			close(state);
+ 			close(state);
 			close(con);
 		}
 
@@ -550,6 +585,22 @@ public class Query {
 	public Query transaction(Transaction trans) {
 		this.transaction = trans;
 		return this;
+	}
+
+	public String getColumns() {
+		return columns;
+	}
+
+	public String getJoin() {
+		return joinClause;
+	}
+
+	public String getJoinTable() {
+		return joinTable;
+	}
+
+	public Map<String, List<String>> getJoinTables() {
+		return joinTables;
 	}
 
 	public String getOrderBy() {
