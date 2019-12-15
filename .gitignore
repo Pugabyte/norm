@@ -3,4 +3,6 @@
 /h2test.mv.db
 /sqlitetest.db
 /.settings/
-.idea
+/.idea/
+norm.iml
+test.sqlite3

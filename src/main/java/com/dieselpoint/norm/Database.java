@@ -83,6 +83,14 @@ public class Database {
 		return new Query(this).sql(sql, args);
 	}
 
+	public Query select(String columns) {
+		return new Query(this).select(columns);
+	}
+
+	public Query innerJoin(String joinTable) {
+		return new Query(this).innerJoin(joinTable);
+	}
+
 	/**
 	 * Create a query with the given where clause.
 	 * @param where Example: "name=?"

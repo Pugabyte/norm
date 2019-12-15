@@ -3,6 +3,8 @@ package com.dieselpoint.norm.sqlmakers;
 import java.math.BigDecimal;
 import java.sql.ResultSet;
 import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
 import javax.persistence.Column;
@@ -154,18 +156,23 @@ public class StandardSqlMaker implements SqlMaker {
 
 	@Override
 	public String getSelectSql(Query query, Class<?> rowClass) {
-
 		// unlike insert and update, this needs to be done dynamically
 		// and can't be precalculated because of the where and order by
-		
 		StandardPojoInfo pojoInfo = getPojoInfo(rowClass);
-		String columns = pojoInfo.selectColumns;
-		
+		String columns = query.getColumns();
+
+		if (columns == null) {
+			columns = pojoInfo.selectColumns;
+		}
+
+		Map<String, List<String>> joinTables = query.getJoinTables();
 		String where = query.getWhere();
 		String table = query.getTable();
+
 		if (table == null) {
 			table = pojoInfo.table;
 		}
+
 		String orderBy = query.getOrderBy();
 		Integer limit = query.getLimit();
 		Integer offset = query.getOffset();
@@ -175,29 +182,48 @@ public class StandardSqlMaker implements SqlMaker {
 		out.append(columns);
 		out.append(" from ");
 		out.append(table);
+
+		if (joinTables != null) {
+			for (String joinTable : joinTables.keySet()) {
+				out.append(" inner join ");
+				out.append(joinTable);
+				out.append(" on ");
+
+				for (String joinClause : joinTables.get(joinTable)) {
+					out.append(joinClause);
+
+					if (joinTables.get(joinTable).indexOf(joinClause) < joinTables.get(joinTable).size() - 1)
+						out.append(" and ");
+				}
+			}
+		}
+
 		if (where != null) {
 			out.append(" where ");
 			out.append(where);
 		}
+
 		if (orderBy != null) {
 			out.append(" order by ");
 			out.append(orderBy);
 		}
+
 		if (limit != null) {
 			out.append(" limit ");
 			out.append(limit.toString());
 		}
+
 		if (offset != null) {
 			out.append(" offset ");
 			out.append(offset.toString());
 		}
+
 		return out.toString();
 	}
 
 
 	@Override
 	public String getCreateTableSql(Class<?> clazz) {
-		
 		StringBuilder buf = new StringBuilder();
 
 		StandardPojoInfo pojoInfo = getPojoInfo(clazz);
@@ -310,7 +336,6 @@ public class StandardSqlMaker implements SqlMaker {
 		return "delete from " + table + " where " + primaryKeyName + "=?";
 	}
 
-
 	@Override
 	public Object[] getDeleteArgs(Query query, Object row) {
 		StandardPojoInfo pojoInfo = getPojoInfo(row.getClass());
@@ -320,7 +345,6 @@ public class StandardSqlMaker implements SqlMaker {
 		return args;
 	}
 
-
 	@Override
 	public String getUpsertSql(Query query, Object row) {
 		String msg =
@@ -329,12 +353,9 @@ public class StandardSqlMaker implements SqlMaker {
 		throw new UnsupportedOperationException(msg);
 	}
 
-
 	@Override
 	public Object[] getUpsertArgs(Query query, Object row) {
 		throw new UnsupportedOperationException();
 	}
-
-
 
 }
