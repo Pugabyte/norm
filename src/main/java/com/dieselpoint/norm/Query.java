@@ -57,6 +57,14 @@ public class Query {
 	}
 
 	/**
+	 * Specify the table to operate on.
+	 */
+	public Query table(String table) {
+		this.table = table;
+		return this;
+	}
+
+	/**
 	 * Add a join clause and some parameters to specify the columns in which
 	 * the join is performed. Has no effect if the .sql() method is used.
 	 * @param joinTable Name of table in which to join.
@@ -113,6 +121,16 @@ public class Query {
 	 */
 	public Query sql(String sql, List<?> args) {
 		this.sql = sql;
+		this.args = args.toArray();
+		return this;
+	}
+
+	public Query args(Object... args) {
+		this.args = args;
+		return this;
+	}
+
+	public Query args(List<?> args) {
 		this.args = args.toArray();
 		return this;
 	}
@@ -559,14 +577,6 @@ public class Query {
 			sql += " where " + where;
 		}
 		execute();
-		return this;
-	}
-
-	/**
-	 * Specify the table to operate on.
-	 */
-	public Query table(String table) {
-		this.table = table;
 		return this;
 	}
 
