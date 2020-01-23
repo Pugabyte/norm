@@ -196,6 +196,7 @@ public class StandardSqlMaker implements SqlMaker {
 		if (table == null)
 			table = ((StandardPojoInfo) query.getPojoInfo()).table;
 
+		String joinType = query.getJoinType();
 		Map<String, List<String>> joinTables = query.getJoinTables();
 		List<String> where = query.getWhere();
 
@@ -205,7 +206,9 @@ public class StandardSqlMaker implements SqlMaker {
 
 		if (joinTables != null) {
 			for (String joinTable : joinTables.keySet()) {
-				out.append(" inner join ");
+				out.append(" ");
+				out.append(joinType);
+				out.append(" join ");
 				out.append(joinTable);
 				out.append(" on ");
 

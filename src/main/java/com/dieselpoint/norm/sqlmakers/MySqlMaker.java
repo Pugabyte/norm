@@ -5,6 +5,8 @@ import com.dieselpoint.norm.Query;
 import java.math.BigDecimal;
 import java.sql.Date;
 import java.sql.Timestamp;
+import java.time.LocalDate;
+import java.time.LocalDateTime;
 
 public class MySqlMaker extends StandardSqlMaker {
 
@@ -62,6 +64,10 @@ public class MySqlMaker extends StandardSqlMaker {
 
 		if (dataType.equals(Boolean.class) || dataType.equals(boolean.class)) {
 			colType = "tinyint";
+		} else if (dataType.equals(LocalDate.class)) {
+			colType = "date";
+		} else if (dataType.equals(LocalDateTime.class)) {
+			colType = "datetime";
 		} else {
 			colType = super.getColType(dataType, length, precision, scale);
 		}

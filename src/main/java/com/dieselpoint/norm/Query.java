@@ -26,7 +26,7 @@ public class Query {
 	private Object generatedKeyReceiver;
 	private String[] generatedKeyNames;
 
-	private String sql, columns, table, joinTable, joinClause, orderBy;
+	private String sql, columns, table, joinType, joinTable, joinClause, orderBy;
 	List<String> where;
 	private Map<String, List<String>> joinTables;
 	private Integer limit, offset;
@@ -72,8 +72,16 @@ public class Query {
 	 * @param joinTable Name of table in which to join.
 	 */
 	public Query innerJoin(String joinTable) {
+		this.joinType = "inner";
 		this.joinTable = joinTable;
-		this.joinTables.put(joinTable, new ArrayList<String>());
+		this.joinTables.put(joinTable, new ArrayList<>());
+		return this;
+	}
+
+	public Query leftJoin(String joinTable) {
+		this.joinType = "left";
+		this.joinTable = joinTable;
+		this.joinTables.put(joinTable, new ArrayList<>());
 		return this;
 	}
 
@@ -614,12 +622,16 @@ public class Query {
 		return columns;
 	}
 
-	public String getJoin() {
-		return joinClause;
+	public String getJoinType() {
+		return joinType;
 	}
 
 	public String getJoinTable() {
 		return joinTable;
+	}
+
+	public String getJoin() {
+		return joinClause;
 	}
 
 	public Map<String, List<String>> getJoinTables() {
