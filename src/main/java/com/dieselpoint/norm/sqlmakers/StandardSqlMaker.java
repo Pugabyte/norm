@@ -1,17 +1,15 @@
 package com.dieselpoint.norm.sqlmakers;
 
+import com.dieselpoint.norm.DbException;
+import com.dieselpoint.norm.Query;
+import com.dieselpoint.norm.Util;
+
+import javax.persistence.Column;
 import java.math.BigDecimal;
-import java.sql.ResultSet;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
-
-import javax.persistence.Column;
-
-import com.dieselpoint.norm.DbException;
-import com.dieselpoint.norm.Query;
-import com.dieselpoint.norm.Util;
 
 /**
  * Produces ANSI-standard SQL. Extend this class to handle different flavors of sql.
@@ -159,18 +157,11 @@ public class StandardSqlMaker implements SqlMaker {
 		// unlike insert and update, this needs to be done dynamically
 		// and can't be precalculated because of the where and order by
 		StandardPojoInfo pojoInfo = getPojoInfo(rowClass);
+		query.setPojoInfo(pojoInfo);
 		String columns = query.getColumns();
 
 		if (columns == null) {
 			columns = pojoInfo.selectColumns;
-		}
-
-		Map<String, List<String>> joinTables = query.getJoinTables();
-		String where = query.getWhere();
-		String table = query.getTable();
-
-		if (table == null) {
-			table = pojoInfo.table;
 		}
 
 		String orderBy = query.getOrderBy();
@@ -180,6 +171,35 @@ public class StandardSqlMaker implements SqlMaker {
 		StringBuilder out = new StringBuilder();
 		out.append("select ");
 		out.append(columns);
+		out.append(getClauseSql(query));
+
+		if (orderBy != null) {
+			out.append(" order by ");
+			out.append(orderBy);
+		}
+
+		if (limit != null) {
+			out.append(" limit ");
+			out.append(limit.toString());
+		}
+
+		if (offset != null) {
+			out.append(" offset ");
+			out.append(offset.toString());
+		}
+
+		return out.toString();
+	}
+
+	private String getClauseSql(Query query) {
+		String table = query.getTable();
+		if (table == null)
+			table = ((StandardPojoInfo) query.getPojoInfo()).table;
+
+		Map<String, List<String>> joinTables = query.getJoinTables();
+		List<String> where = query.getWhere();
+
+		StringBuilder out = new StringBuilder();
 		out.append(" from ");
 		out.append(table);
 
@@ -198,24 +218,15 @@ public class StandardSqlMaker implements SqlMaker {
 			}
 		}
 
-		if (where != null) {
+		if (where != null && where.size() > 0) {
 			out.append(" where ");
-			out.append(where);
-		}
 
-		if (orderBy != null) {
-			out.append(" order by ");
-			out.append(orderBy);
-		}
+			for (String clause : where) {
+				out.append(clause);
 
-		if (limit != null) {
-			out.append(" limit ");
-			out.append(limit.toString());
-		}
-
-		if (offset != null) {
-			out.append(" offset ");
-			out.append(offset.toString());
+				if (where.indexOf(clause) < where.size() - 1)
+					out.append(" and ");
+			}
 		}
 
 		return out.toString();
@@ -319,20 +330,30 @@ public class StandardSqlMaker implements SqlMaker {
 	}
 
 	@Override
+	public String getDeleteSql(Query query) {
+		String table = query.getTable();
+
+		if (table == null)
+			throw new DbException("You must specify a table name");
+
+		return "delete " + table + getClauseSql(query);
+	}
+
+	@Override
 	public String getDeleteSql(Query query, Object row) {
-		
+
 		StandardPojoInfo pojoInfo = getPojoInfo(row.getClass());
-		
-		String table = query.getTable();  
+
+		String table = query.getTable();
 		if (table == null) {
 			table = pojoInfo.table;
 			if (table == null) {
 				throw new DbException("You must specify a table name");
 			}
 		}
-		
+
 		String primaryKeyName = pojoInfo.primaryKeyName;
-		
+
 		return "delete from " + table + " where " + primaryKeyName + "=?";
 	}
 

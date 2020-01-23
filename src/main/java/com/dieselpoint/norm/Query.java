@@ -26,7 +26,8 @@ public class Query {
 	private Object generatedKeyReceiver;
 	private String[] generatedKeyNames;
 
-	private String sql, columns, table, joinTable, joinClause, where, orderBy;
+	private String sql, columns, table, joinTable, joinClause, orderBy;
+	List<String> where;
 	private Map<String, List<String>> joinTables;
 	private Integer limit, offset;
 	private Object insertRow;
@@ -37,13 +38,14 @@ public class Query {
 
 	private Database db;
 	private SqlMaker sqlMaker;
+	private PojoInfo pojoInfo;
 
 	private Transaction transaction;
 
 	public Query(Database db) {
 		this.db = db;
 		this.sqlMaker = db.getSqlMaker();
-		this.joinTables = new HashMap<String, List<String>>();
+		this.joinTables = new HashMap<>();
 	}
 
 	/**
@@ -94,7 +96,19 @@ public class Query {
 	 * @param args  The parameter values to use in the where, example: "Bob"
 	 */
 	public Query where(String where, Object... args) {
-		this.where = where;
+		this.where = new ArrayList<String>() {{ add(where); }};
+		this.args = args;
+		return this;
+	}
+
+	public Query and(String clause, Object... args) {
+		if (this.where == null)
+			if (joinTable != null)
+				this.joinTables.get(joinTable).add(clause);
+			else
+				throw new DbException("AND clause not attached to join or where");
+		else
+			this.where.add(clause);
 		this.args = args;
 		return this;
 	}
@@ -192,6 +206,8 @@ public class Query {
 			state = localCon.prepareStatement(sql);
 			loadArgs(state);
 
+			debug(state);
+
 			ResultSet rs = state.executeQuery();
 
 			ResultSetMetaData meta = rs.getMetaData();
@@ -247,6 +263,8 @@ public class Query {
 
 			state = localCon.prepareStatement(sql);
 			loadArgs(state);
+
+			debug(state);
 
 			ResultSet rs = state.executeQuery();
 
@@ -402,6 +420,8 @@ public class Query {
 					state.setObject(i + 1, arg);
 				}
 			}
+
+			debug(state);
 
 			rowsAffected = state.executeUpdate();
 
@@ -568,14 +588,7 @@ public class Query {
 	 * .table() method and limit the rows to delete using the .where() method.
 	 */
 	public Query delete() {
-		String table = getTable();
-		if (table == null) {
-			throw new DbException("You must specify a table name with the table() method.");
-		}
-		sql = "delete from " + table;
-		if (where != null) {
-			sql += " where " + where;
-		}
+		sql = sqlMaker.getDeleteSql(this);
 		execute();
 		return this;
 	}
@@ -625,12 +638,25 @@ public class Query {
 		return offset;
 	}
 
-	public String getWhere() {
+	public List<String> getWhere() {
 		return where;
 	}
 
 	public String getTable() {
 		return table;
+	}
+
+	public PojoInfo getPojoInfo() {
+		return pojoInfo;
+	}
+
+	public void setPojoInfo(PojoInfo pojoInfo) {
+		this.pojoInfo = pojoInfo;
+	}
+
+	private void debug(PreparedStatement state) {
+		if (false)
+			System.out.println(state);
 	}
 
 }

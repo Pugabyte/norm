@@ -11,7 +11,8 @@ public interface SqlMaker {
 
 	public String getUpdateSql(Query query, Object row);
 	public Object[] getUpdateArgs(Query query, Object row);
-	
+
+	public String getDeleteSql(Query query);
 	public String getDeleteSql(Query query, Object row);
 	public Object[] getDeleteArgs(Query query, Object row);
 
