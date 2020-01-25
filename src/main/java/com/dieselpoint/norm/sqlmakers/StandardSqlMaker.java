@@ -241,7 +241,7 @@ public class StandardSqlMaker implements SqlMaker {
 		StringBuilder buf = new StringBuilder();
 
 		StandardPojoInfo pojoInfo = getPojoInfo(clazz);
-		buf.append("create table ");
+		buf.append("create table if not exists ");
 		buf.append(pojoInfo.table);
 		buf.append(" (");
 		
