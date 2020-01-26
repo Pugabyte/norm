@@ -35,6 +35,8 @@ public class Query {
 	private Object[] args;
 
 	private int rowsAffected;
+	
+	private ResultSetMetaData meta;
 
 	private Database db;
 	private SqlMaker sqlMaker;
@@ -218,7 +220,7 @@ public class Query {
 
 			ResultSet rs = state.executeQuery();
 
-			ResultSetMetaData meta = rs.getMetaData();
+			meta = rs.getMetaData();
 			int colCount = meta.getColumnCount();
 
 			while (rs.next()) {
@@ -276,11 +278,11 @@ public class Query {
 
 			ResultSet rs = state.executeQuery();
 
-			ResultSetMetaData meta = rs.getMetaData();
+			meta = rs.getMetaData();
 			int colCount = meta.getColumnCount();
 
-			if (Util.isPrimitiveOrString(clazz)) {
-				// if the receiver class is a primitive just grab the first column and assign it
+			if (Util.isPrimitiveOrString(clazz) || clazz.getPackage().getName().startsWith("java.sql")) {
+				// if the receiver class is a primitive or jdbc type just grab the first column and assign it
 				while (rs.next()) {
 					Object colValue = rs.getObject(1);
 					if (colValue != null)
@@ -300,14 +302,16 @@ public class Query {
 						if (colValue != null)
 							colValue = sqlMaker.convertValue(rs.getObject(i), meta.getColumnTypeName(i));
 
-						pojoInfo.putValue(row, colName, colValue);
+						pojoInfo.putValue(row, colName, colValue, true);
 					}
 					out.add(row);
 				}
 			}
 
 		} catch (InstantiationException | IllegalAccessException | SQLException e) {
-			throw new DbException(e);
+			DbException dbe = new DbException(e);
+			dbe.setSql(sql);
+			throw dbe;
 		} finally {
  			close(state);
 			close(con);
@@ -444,7 +448,9 @@ public class Query {
 			}
 
 		} catch (SQLException | IllegalArgumentException e) {
-			throw new DbException(e);
+			DbException dbe = new DbException(e);
+			dbe.setSql(sql);
+			throw dbe;
 		} finally {
 			close(state);
 			close(con);
@@ -662,6 +668,10 @@ public class Query {
 
 	public String getTable() {
 		return table;
+	}
+	
+	public ResultSetMetaData getResultSetMetaData() {
+		return meta;
 	}
 
 	public PojoInfo getPojoInfo() {
