@@ -340,15 +340,8 @@ public class Query {
 	 * specify the table, or you can specify the table with the .table() method.
 	 */
 	public Query insert(Object row) {
-		
-		if (this.generatedKeyReceiver == null) {
-			PojoInfo pojoInfo = sqlMaker.getPojoInfo(row.getClass());
-			Property prop = pojoInfo.getGeneratedColumnProperty();
-			if (prop != null) {
-				this.generatedKeyReceiver = row;
-				this.generatedKeyNames = new String [] {prop.name};
-			}
-		}
+
+		getGeneratedKeyReceiver(row);
 
 		sql = sqlMaker.getInsertSql(this, row);
 		args = sqlMaker.getInsertArgs(this, row);
@@ -363,12 +356,25 @@ public class Query {
 	 */
 	public Query upsert(Object row) {
 
+		getGeneratedKeyReceiver(row);
+
 		sql = sqlMaker.getUpsertSql(this, row);
 		args = sqlMaker.getUpsertArgs(this, row);
 
 		execute();
 
 		return this;
+	}
+
+	private void getGeneratedKeyReceiver(Object row) {
+		if (this.generatedKeyReceiver == null) {
+			PojoInfo pojoInfo = sqlMaker.getPojoInfo(row.getClass());
+			Property prop = pojoInfo.getGeneratedColumnProperty();
+			if (prop != null) {
+				this.generatedKeyReceiver = row;
+				this.generatedKeyNames = new String[]{prop.name};
+			}
+		}
 	}
 
 	/**
