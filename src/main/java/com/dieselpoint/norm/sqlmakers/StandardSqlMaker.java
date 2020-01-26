@@ -112,7 +112,7 @@ public class StandardSqlMaker implements SqlMaker {
 
 	
 	public void makeInsertSql(StandardPojoInfo pojoInfo) {
-		ArrayList<String> cols = new ArrayList<String>();
+		ArrayList<String> cols = new ArrayList<>();
 		for (Property prop: pojoInfo.propertyMap.values()) {
 			if (prop.isGenerated) {
 				continue;
@@ -133,7 +133,7 @@ public class StandardSqlMaker implements SqlMaker {
 		
 		pojoInfo.insertSql = buf.toString();
 	}
-	
+
 	public void makeUpsertSql(StandardPojoInfo pojoInfo) {
 	}
 

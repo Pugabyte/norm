@@ -1,12 +1,14 @@
 package com.dieselpoint.norm.sqlmakers;
 
 import com.dieselpoint.norm.Query;
+import com.dieselpoint.norm.Util;
 
 import java.math.BigDecimal;
 import java.sql.Date;
 import java.sql.Timestamp;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 
 public class MySqlMaker extends StandardSqlMaker {
 
@@ -34,14 +36,25 @@ public class MySqlMaker extends StandardSqlMaker {
 
 	@Override
 	public void makeUpsertSql(StandardPojoInfo pojoInfo) {
+		ArrayList<String> cols = new ArrayList<>();
+		for (Property prop: pojoInfo.propertyMap.values()) {
+			if (prop.isGenerated && !prop.isPrimaryKey) {
+				continue;
+			}
+			cols.add(prop.name);
+		}
 
-		// INSERT INTO table (a,b,c) VALUES (1,2,3) ON DUPLICATE KEY UPDATE c=c+1;
-		
-		// mostly the same as the makeInsertSql code
-		// it uses the same column names and argcount
+		pojoInfo.insertColumnNames = cols.toArray(new String [cols.size()]);
+		pojoInfo.insertSqlArgCount = pojoInfo.insertColumnNames.length;
 
 		StringBuilder buf = new StringBuilder();
-		buf.append(pojoInfo.insertSql);
+		buf.append("insert into ");
+		buf.append(pojoInfo.table);
+		buf.append(" (");
+		buf.append(Util.join(pojoInfo.insertColumnNames)); // comma sep list?
+		buf.append(") values (");
+		buf.append(Util.getQuestionMarks(pojoInfo.insertSqlArgCount));
+		buf.append(")");
 		buf.append(" on duplicate key update ");
 		
 		boolean first = true;
