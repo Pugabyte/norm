@@ -1,30 +1,26 @@
 package com.dieselpoint.norm.sqlmakers;
 
-import java.beans.BeanInfo;
-import java.beans.IntrospectionException;
-import java.beans.Introspector;
-import java.beans.PropertyDescriptor;
-import java.lang.reflect.AnnotatedElement;
-import java.lang.reflect.Field;
-import java.lang.reflect.InvocationTargetException;
-import java.lang.reflect.Method;
-import java.lang.reflect.Modifier;
-import java.util.ArrayList;
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.Map;
+import com.dieselpoint.norm.ColumnOrder;
+import com.dieselpoint.norm.DbException;
+import com.dieselpoint.norm.serialize.DbSerializer;
 
+import javax.persistence.AttributeConverter;
 import javax.persistence.Column;
+import javax.persistence.Convert;
 import javax.persistence.EnumType;
 import javax.persistence.Enumerated;
 import javax.persistence.GeneratedValue;
 import javax.persistence.Id;
 import javax.persistence.Table;
 import javax.persistence.Transient;
-
-import com.dieselpoint.norm.ColumnOrder;
-import com.dieselpoint.norm.DbException;
-import com.dieselpoint.norm.serialize.DbSerializer;
+import java.beans.IntrospectionException;
+import java.lang.reflect.AnnotatedElement;
+import java.lang.reflect.Field;
+import java.lang.reflect.Modifier;
+import java.util.ArrayList;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
 
 /**
  * Provides means of reading and writing properties in a pojo.
@@ -244,24 +240,13 @@ public class StandardPojoInfo implements PojoInfo {
 		if (value == null) return;
 
 		if (prop.serializer != null) {
-			value = prop.serializer.deserialize((String) value, prop.dataType);
+			value = prop.serializer.deserialize((String) value);
 
 		} else if (prop.converter != null) {
 			value = prop.converter.convertToEntityAttribute(value);
 
 		} else if (prop.isEnumField) {
 			value = getEnumConst(prop.enumClass, prop.enumType, value);
-		}
-
-		if (prop.writeMethod != null) {
-			try {
-				prop.writeMethod.invoke(pojo, value);
-			} catch (IllegalAccessException | IllegalArgumentException | InvocationTargetException e) {
-				throw new DbException("Could not write value into pojo. Property: " + prop.name + " method: "
-						+ prop.writeMethod.toString() + " value: " + value + " value class: "
-						+ value.getClass().toString(), e);
-			}
-			return;
 		}
 
 		if (prop.field != null) {
