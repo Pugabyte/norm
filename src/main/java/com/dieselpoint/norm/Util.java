@@ -1,7 +1,8 @@
 package com.dieselpoint.norm;
 
+import java.util.Arrays;
 import java.util.Collection;
-import java.util.List;
+import java.util.stream.Collectors;
 
 public class Util {
 
@@ -15,8 +16,8 @@ public class Util {
 		}
 		return buf.toString();
 	}
-	
-	
+
+
 	public static String join(Collection<String> strs) {
 		StringBuilder sb = new StringBuilder();
 		boolean first = true;
@@ -29,6 +30,13 @@ public class Util {
 			sb.append(col);
 		}
 		return sb.toString();
+	}
+
+	public static String joinEscaped(Collection<String> columns) {
+		return columns.stream().map(columnName ->
+				Arrays.stream(columnName.split("\\.")).map(part ->
+						"`" + part + "`").collect(Collectors.joining(".")))
+				.collect(Collectors.joining(","));
 	}
 	
 	public static String getQuestionMarks(int count) {

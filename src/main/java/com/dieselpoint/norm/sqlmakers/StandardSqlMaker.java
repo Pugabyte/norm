@@ -119,14 +119,14 @@ public class StandardSqlMaker implements SqlMaker {
 			}
 			cols.add(prop.name);
 		}
-		pojoInfo.insertColumnNames = cols.toArray(new String [cols.size()]);
+		pojoInfo.insertColumnNames = cols.toArray(new String[0]);
 		pojoInfo.insertSqlArgCount = pojoInfo.insertColumnNames.length;
 		
 		StringBuilder buf = new StringBuilder();
 		buf.append("insert into ");
 		buf.append(pojoInfo.table);
 		buf.append(" (");
-		buf.append(Util.join(pojoInfo.insertColumnNames)); // comma sep list?
+		buf.append(Util.joinEscaped(cols));
 		buf.append(") values (");
 		buf.append(Util.getQuestionMarks(pojoInfo.insertSqlArgCount));
 		buf.append(")");
@@ -143,11 +143,11 @@ public class StandardSqlMaker implements SqlMaker {
 			// this applies if the rowClass is a Map
 			pojoInfo.selectColumns = "*";
 		} else {
-			ArrayList<String> cols = new ArrayList<String>();
+			ArrayList<String> cols = new ArrayList<>();
 			for (Property prop: pojoInfo.propertyMap.values()) {
 				cols.add(prop.name);
 			}
-			pojoInfo.selectColumns = Util.join(cols);
+			pojoInfo.selectColumns = Util.joinEscaped(cols);
 		}
 	}
 

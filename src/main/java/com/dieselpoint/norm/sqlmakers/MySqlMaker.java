@@ -51,7 +51,7 @@ public class MySqlMaker extends StandardSqlMaker {
 		buf.append("insert into ");
 		buf.append(pojoInfo.table);
 		buf.append(" (");
-		buf.append(Util.join(pojoInfo.insertColumnNames)); // comma sep list?
+		buf.append(Util.joinEscaped(cols)); // comma sep list?
 		buf.append(") values (");
 		buf.append(Util.getQuestionMarks(pojoInfo.insertSqlArgCount));
 		buf.append(")");
@@ -64,7 +64,7 @@ public class MySqlMaker extends StandardSqlMaker {
 			} else {
 				buf.append(',');
 			}
-			buf.append(colName);
+			buf.append("`").append(colName).append("`");
 			buf.append("=?");
 		}
 		
